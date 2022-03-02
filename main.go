@@ -12,8 +12,8 @@ func main() {
 
 	port := ":8080"
 
-	http.HandleFunc("/", server.ServeFile)
 	http.HandleFunc("/home", server.ServeHome)
+	http.HandleFunc("/", server.ServeFile)
 
 	fmt.Printf("Server starting at port %v\n", port)
 

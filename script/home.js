@@ -15,7 +15,7 @@ function sendAlert(alertType, message) {
     // Remove all the alerts if there is more than 3 alerts present
     if (insertDiv.childElementCount >= 3) {
         
-        const dummyList = []
+        const dummyList = [];
         const children = insertDiv.childNodes;
 
         children.forEach(child => dummyList.push(child));
@@ -39,18 +39,59 @@ function getAllUsers() {
 
     let xmlHttp = new XMLHttpRequest();
 
-    let params = new URLSearchParams()
-    params.append("command", "get-all-users")
+    let params = new URLSearchParams();
+    params.append("command", "get-all-users");
     
     xmlHttp.open("GET", "/home?" + params.toString(), true);
-    xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
+    xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    
+    xmlHttp.onreadystatechange = function() {
+        if (xmlHttp.readyState == 4) {
+            console.log(`${xmlHttp.status} : \n${xmlHttp.responseText}`);
+        }
+    };
+
+    xmlHttp.send();
+}
+
+// Register user
+function registerUser() {
+
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+
+    let xmlHttp = new XMLHttpRequest();
+    
+    xmlHttp.open("POST", "/home", true);
+    xmlHttp.setRequestHeader("Content-Type", "application/json");
     
     xmlHttp.onreadystatechange = () => {
         if (xmlHttp.readyState == 4) {
-            console.log(xmlHttp.status)
-            console.log(xmlHttp.responseText)
+            const user = JSON.parse(xmlHttp.responseText);
+            console.log(`${xmlHttp.status} : \n${xmlHttp.responseText}`);
+            sendAlert(
+                "Success", 
+                'Welcome ' +
+                '<span class="font-italic">' + user.username +'</span>'+
+                ', you have successfully registered.');
         }
-    }
+    };
 
-    xmlHttp.send()
+    console.log(username.value);
+    console.log(password.value);
+    const content = JSON.stringify({"id": "00000000-0000-0000-0000-000000000000", "username": username.value, "password": password.value});
+
+    xmlHttp.send(content);
 }
+
+/*
+{
+  "users" : [
+    {
+      "id" : "4bbbd09d-8c92-463c-8895-0491073feefe",
+      "username" : "test",
+      "password" : "test1234"
+    }
+  ]
+}
+*/

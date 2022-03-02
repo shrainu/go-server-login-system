@@ -27,6 +27,32 @@ func NewUser(username, password string) User {
 	}
 }
 
+func AddUser(username, password string) User {
+
+	user := NewUser(username, password)
+
+	userDB := GetDB()
+	if userDB == nil {
+		return User{}
+	}
+	userDB.Users = append(userDB.Users, user)
+
+	file, err := os.OpenFile("database/users.json", os.O_RDWR, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	defer file.Close()
+
+	data, err := json.MarshalIndent(userDB, "", "  ")
+	if err != nil {
+		log.Println(err)
+	}
+
+	file.Write(data)
+
+	return user
+}
+
 type UserDB struct {
 	Users []User `json:"users"`
 }
@@ -78,9 +104,10 @@ func ServeFile(rw http.ResponseWriter, r *http.Request) {
 
 func ServeHome(rw http.ResponseWriter, r *http.Request) {
 
-	if r.URL.String() == "/home" {
+	if r.URL.String() == "/home" && r.Method == "GET" {
 		r.URL.Path = "/template/home.html"
 		ServeFile(rw, r)
+		return
 	}
 
 	switch r.Method {
@@ -99,6 +126,30 @@ func ServeHome(rw http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Println(err)
 			}
+		}
+	case "POST":
+
+		rw.Header().Set("Content-Type", "application/json")
+
+		var user User
+		err := json.NewDecoder(r.Body).Decode(&user)
+		if err != nil {
+			log.Println(err)
+		}
+
+		added := AddUser(user.Username, user.Password)
+
+		// Users data shouldn't be returned in a normal application,
+		// but its okay for ours since, this is done for educational purposes.
+		_, err = fmt.Fprintf(
+			rw,
+			"{\"id\":\"%s\", \"username\":\"%s\", \"password\":\"%s\"}\n",
+			added.Id.String(),
+			added.Username,
+			added.Password,
+		)
+		if err != nil {
+			log.Println(err)
 		}
 	default:
 		log.Println("Unhandled request, method:", r.Method)
