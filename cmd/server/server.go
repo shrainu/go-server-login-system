@@ -15,6 +15,14 @@ import (
 
 func checkValidUsername(username string) (bool, error) {
 
+	userDB := GetDB()
+
+	for _, v := range userDB.Users {
+		if v.Username == username {
+			return false, fmt.Errorf("username already taken")
+		}
+	}
+
 	valid := !strings.ContainsAny(
 		username,
 		"!$%^&*()@?><||{}';:\"[]#.,\\-+*/` ",
