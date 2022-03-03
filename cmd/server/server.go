@@ -8,9 +8,24 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/google/uuid"
 )
+
+func checkValidUsername(username string) (bool, error) {
+
+	valid := !strings.ContainsAny(
+		username,
+		"!$%^&*()@?><||{}';:\"[]#.,\\-+*/` ",
+	)
+
+	if !valid {
+		return false, fmt.Errorf("username contains forbidden characters")
+	}
+
+	return true, nil
+}
 
 type User struct {
 	Id       uuid.UUID `json:"id"`
@@ -135,6 +150,14 @@ func ServeHome(rw http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&user)
 		if err != nil {
 			log.Println(err)
+		}
+
+		validUsername, err := checkValidUsername(user.Username)
+		if !validUsername {
+
+			rw.WriteHeader(http.StatusNotAcceptable)
+			fmt.Fprintln(rw, err.Error())
+			return
 		}
 
 		added := AddUser(user.Username, user.Password)
