@@ -15,6 +15,10 @@ import (
 
 func checkValidUsername(username string) (bool, error) {
 
+	if len(username) < 3 {
+		return false, fmt.Errorf("username can't be shorter than 3 characters")
+	}
+
 	userDB := GetDB()
 
 	for _, v := range userDB.Users {
@@ -30,6 +34,24 @@ func checkValidUsername(username string) (bool, error) {
 
 	if !valid {
 		return false, fmt.Errorf("username contains forbidden characters")
+	}
+
+	return true, nil
+}
+
+func checkValidPassword(password string) (bool, error) {
+
+	if len(password) < 8 {
+		return false, fmt.Errorf("password can't be shorter than 8 characters")
+	}
+
+	valid := !strings.ContainsAny(
+		password,
+		" ;:\"\\'",
+	)
+
+	if !valid {
+		return false, fmt.Errorf("password can't contain ; : \" \\ '")
 	}
 
 	return true, nil
@@ -162,6 +184,14 @@ func ServeHome(rw http.ResponseWriter, r *http.Request) {
 
 		validUsername, err := checkValidUsername(user.Username)
 		if !validUsername {
+
+			rw.WriteHeader(http.StatusNotAcceptable)
+			fmt.Fprintln(rw, err.Error())
+			return
+		}
+
+		validPassword, err := checkValidPassword(user.Password)
+		if !validPassword {
 
 			rw.WriteHeader(http.StatusNotAcceptable)
 			fmt.Fprintln(rw, err.Error())

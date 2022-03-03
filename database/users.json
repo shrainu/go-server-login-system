@@ -1,5 +1,9 @@
 {
   "users": [
-    
+    {
+      "id": "bf4c5d0c-f39c-422e-9f46-305cc9f54f4b",
+      "username": "test_user",
+      "password": "/"
+    }
   ]
 }
