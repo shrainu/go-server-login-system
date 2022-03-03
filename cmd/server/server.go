@@ -57,6 +57,71 @@ func checkValidPassword(password string) (bool, error) {
 	return true, nil
 }
 
+func checkLoginCredentials(username, password string) *User {
+
+	userDBMap := GetDB().GetUserMap()
+
+	var user *User = nil
+
+	u, ok := userDBMap[username]
+	if ok && u.Password == password {
+		user = &u
+	}
+
+	return user
+}
+
+func registerUser(user User, rw http.ResponseWriter, r *http.Request) {
+
+	validUsername, err := checkValidUsername(user.Username)
+	if !validUsername {
+
+		rw.WriteHeader(http.StatusNotAcceptable)
+		fmt.Fprintln(rw, err.Error())
+		return
+	}
+
+	validPassword, err := checkValidPassword(user.Password)
+	if !validPassword {
+
+		rw.WriteHeader(http.StatusNotAcceptable)
+		fmt.Fprintln(rw, err.Error())
+		return
+	}
+
+	added := AddUser(user.Username, user.Password)
+
+	// Users data shouldn't be returned in a normal application,
+	// but its okay for ours since, this is done for educational purposes.
+	fmt.Fprintf(
+		rw,
+		"{\"id\":\"%s\", \"username\":\"%s\", \"password\":\"%s\"}\n",
+		added.Id.String(),
+		added.Username,
+		added.Password,
+	)
+}
+
+func loginUser(user User, rw http.ResponseWriter, r *http.Request) {
+
+	crntUser := checkLoginCredentials(user.Username, user.Password)
+
+	if crntUser != nil {
+
+		fmt.Fprintf(
+			rw,
+			"{\"id\":\"%s\", \"username\":\"%s\", \"password\":\"%s\"}\n",
+			crntUser.Id.String(),
+			crntUser.Username,
+			crntUser.Password,
+		)
+	} else {
+
+		rw.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(rw, "user not found with given username or password")
+	}
+}
+
 type User struct {
 	Id       uuid.UUID `json:"id"`
 	Username string    `json:"username"`
@@ -102,11 +167,11 @@ type UserDB struct {
 	Users []User `json:"users"`
 }
 
-func (db *UserDB) GetUserMap() map[uuid.UUID]User {
+func (db *UserDB) GetUserMap() map[string]User {
 
-	users := map[uuid.UUID]User{}
+	users := map[string]User{}
 	for _, v := range db.Users {
-		users[v.Id] = v
+		users[v.Username] = v
 	}
 
 	return users
@@ -174,6 +239,8 @@ func ServeHome(rw http.ResponseWriter, r *http.Request) {
 		}
 	case "POST":
 
+		command := r.URL.Query().Get("command")
+
 		rw.Header().Set("Content-Type", "application/json")
 
 		var user User
@@ -182,35 +249,10 @@ func ServeHome(rw http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 
-		validUsername, err := checkValidUsername(user.Username)
-		if !validUsername {
-
-			rw.WriteHeader(http.StatusNotAcceptable)
-			fmt.Fprintln(rw, err.Error())
-			return
-		}
-
-		validPassword, err := checkValidPassword(user.Password)
-		if !validPassword {
-
-			rw.WriteHeader(http.StatusNotAcceptable)
-			fmt.Fprintln(rw, err.Error())
-			return
-		}
-
-		added := AddUser(user.Username, user.Password)
-
-		// Users data shouldn't be returned in a normal application,
-		// but its okay for ours since, this is done for educational purposes.
-		_, err = fmt.Fprintf(
-			rw,
-			"{\"id\":\"%s\", \"username\":\"%s\", \"password\":\"%s\"}\n",
-			added.Id.String(),
-			added.Username,
-			added.Password,
-		)
-		if err != nil {
-			log.Println(err)
+		if command == "register" {
+			registerUser(user, rw, r)
+		} else if command == "login" {
+			loginUser(user, rw, r)
 		}
 	default:
 		log.Println("Unhandled request, method:", r.Method)

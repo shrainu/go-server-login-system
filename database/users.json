@@ -1,9 +1,14 @@
 {
   "users": [
     {
-      "id": "bf4c5d0c-f39c-422e-9f46-305cc9f54f4b",
+      "id": "933f7405-a030-4f9e-bae8-eddf843e9885",
       "username": "test_user",
-      "password": "/"
+      "password": "test1234"
+    },
+    {
+      "id": "69c2f2d9-1471-4fd6-a492-90d4ae160bf9",
+      "username": "test_user12",
+      "password": "test1234"
     }
   ]
 }

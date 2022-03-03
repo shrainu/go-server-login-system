@@ -62,7 +62,7 @@ function registerUser() {
 
     let xmlHttp = new XMLHttpRequest();
     
-    xmlHttp.open("POST", "/home", true);
+    xmlHttp.open("POST", "/home" + "?command=register", true);
     xmlHttp.setRequestHeader("Content-Type", "application/json");
     
     xmlHttp.onreadystatechange = () => {
@@ -76,7 +76,8 @@ function registerUser() {
                     "Success", 
                     'Welcome ' +
                     '<span class="font-italic">' + user.username +'</span>'+
-                    ', you have successfully registered.');
+                    ', you have successfully registered.'
+                );
             }
             else {
 
@@ -86,7 +87,56 @@ function registerUser() {
         }
     };
 
-    const content = JSON.stringify({"id": "00000000-0000-0000-0000-000000000000", "username": username.value, "password": password.value});
+    const content = JSON.stringify(
+        {
+            "id": "00000000-0000-0000-0000-000000000000", 
+            "username": username.value, 
+            "password": password.value
+        }
+    );
+
+    xmlHttp.send(content);
+}
+
+// Login User
+function loginUser() {
+
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+
+    let xmlHttp = new XMLHttpRequest();
+
+    xmlHttp.open("POST", "/home" + "?command=login", true);
+    xmlHttp.setRequestHeader("Content-Type", "application/json");
+
+    xmlHttp.onreadystatechange = () => {
+        if (xmlHttp.readyState == 4) {
+
+            if (xmlHttp.status == 200) {
+
+                const user = JSON.parse(xmlHttp.responseText);
+                console.log(`${xmlHttp.status} : \n${xmlHttp.responseText}`);
+                sendAlert(
+                    "Success", 
+                    'Welcome back ' +
+                    '<span class="font-italic">' + user.username +'</span>'
+                );
+            }
+            else {
+
+                console.log(`${xmlHttp.status} : \n${xmlHttp.responseText}`);
+                sendAlert("Error", xmlHttp.responseText);
+            }
+        }
+    };
+
+    const content = JSON.stringify(
+        {
+            "id": "00000000-0000-0000-0000-000000000000", 
+            "username": username.value, 
+            "password": password.value
+        }
+    );
 
     xmlHttp.send(content);
 }
